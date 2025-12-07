@@ -18,7 +18,7 @@ router.get('/', verifyToken, async (req, res) => {
 });
 
 router.post('/', verifyToken, async (req, res) => {
-    const { name } = req.body;
+    const { name, color } = req.body;
 
     if (!name) {
         return res.status(400).json({ error: 'Nome da tag é obrigatório.' });
@@ -27,6 +27,7 @@ router.post('/', verifyToken, async (req, res) => {
     try {
         const tag = await Tag.create({
             name,
+            color,
             userId: req.user.userId,
         });
 
@@ -37,6 +38,56 @@ router.post('/', verifyToken, async (req, res) => {
     } catch (err) {
         console.error('Erro ao criar tag:', err);
         res.status(500).json({ error: 'Erro ao criar tag.' });
+    }
+});
+
+router.put('/:id', verifyToken, async (req, res) => {
+    const { id } = req.params;
+    const { name, color } = req.body;
+
+    if (!name) {
+        return res.status(400).json({ error: 'Nome da tag é obrigatório.' });
+    }
+
+    try {
+        const tag = await Tag.findOne({
+            where: { id, userId: req.user.userId },
+        });
+
+        if (!tag) {
+            return res.status(404).json({ error: 'Tag não encontrada.' });
+        }
+
+        await tag.update({ name, color });
+
+        res.json({
+            message: 'Tag atualizada com sucesso.',
+            tag,
+        });
+    } catch (err) {
+        console.error('Erro ao atualizar tag:', err);
+        res.status(500).json({ error: 'Erro ao atualizar tag.' });
+    }
+});
+
+router.delete('/:id', verifyToken, async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const tag = await Tag.findOne({
+            where: { id, userId: req.user.userId },
+        });
+
+        if (!tag) {
+            return res.status(404).json({ error: 'Tag não encontrada.' });
+        }
+
+        await tag.destroy();
+
+        res.json({ message: 'Tag removida com sucesso.' });
+    } catch (err) {
+        console.error('Erro ao remover tag:', err);
+        res.status(500).json({ error: 'Erro ao remover tag.' });
     }
 });
 
