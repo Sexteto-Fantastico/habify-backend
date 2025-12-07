@@ -18,7 +18,7 @@ router.post('/', verifyToken, async (req, res) => {
         if (Array.isArray(tags) && tags.every((t) => typeof t === 'string')) {
             const tagInstances = await Tag.findAll({
                 where: {
-                    name: tags,
+                    id: tags,
                     userId: req.user.userId,
                 },
             });
