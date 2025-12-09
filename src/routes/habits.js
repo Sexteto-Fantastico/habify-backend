@@ -1,9 +1,10 @@
 import express from 'express';
 import { Tag, Habit, HabitCompletion } from '../models/index.js';
 import verifyToken from '../middleware/authMiddleware.js';
+import { Op } from 'sequelize';
 
 const router = express.Router();
-
+ 
 router.post('/', verifyToken, async (req, res) => {
     try {
         const { name, description, frequency, tags = [] } = req.body;
@@ -38,8 +39,26 @@ router.post('/', verifyToken, async (req, res) => {
 
 router.get('/all', verifyToken, async (req, res) => {
     try {
+        const { startDate, endDate } = req.query;
+        console.log(startDate, endDate, 'query params')
+        const whereClause = { 
+            userId: req.user.userId
+        }
+        
+        if (startDate || endDate) {
+            whereClause.createdAt = {};
+
+            if (startDate){
+                whereClause.createdAt[Op.gte] = new Date(startDate);
+            }
+
+            if (endDate) {
+                whereClause.createdAt[Op.lte] = new Date(endDate);
+            }
+        }
+
         const habits = await Habit.findAll({
-            where: { userId: req.user.userId },
+            where: whereClause,
             include: [
                 { model: Tag, as: 'tags', through: { attributes: [] } },
                 { model: HabitCompletion, as: 'completions', attributes: ['date'] },
